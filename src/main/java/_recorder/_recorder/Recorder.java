@@ -2,6 +2,7 @@ package _recorder._recorder;
 
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -44,8 +45,10 @@ public final class Recorder {
 
 	public final static void main(String[] args) throws Exception {
 		int ind2record = 0;
+		String outputDir = "/home/tonigor/btcdata";
 		if (args.length > 0){
-			ind2record = Integer.parseInt(args[0]);
+			outputDir = args[0];
+			ind2record = Integer.parseInt(args[1]);
 		}
 
 		// Use the factory to get chosen exchange API using default settings
@@ -55,12 +58,28 @@ public final class Recorder {
 		// Interested in the public polling market data feed (no authentication)
 		PollingMarketDataService marketDataService = exchange.getPollingMarketDataService();
 
-		generic("/home/tonigor/btcdata", marketDataService, marketName, watchList[ind2record].currencyPairToRecord);
+		restAPIrecorder(outputDir, marketDataService, marketName, watchList[ind2record].currencyPairToRecord);
 		// raw((BitstampMarketDataServiceRaw) marketDataService);
 
 	}
 
-	private final static void generic(String outputDir, PollingMarketDataService marketDataService, String marketName, CurrencyPair cP) throws Exception {
+	private final static void restAPIrecorder(String outputDir, PollingMarketDataService marketDataService, String marketName, CurrencyPair cP) throws Exception {
+		outputDir += "/restAPI";
+		// Outputdir should exist
+		if(!new File(outputDir).exists()) {
+            new File(outputDir).mkdirs();
+        }
+		
+		// Formatting for filenames
+		Date date = new Date();
+		DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd");
+		String[] marketNameSplit = marketName.split("\\.");
+		String shortMarketName = marketNameSplit[marketNameSplit.length-2];
+		
+		// Error Logging Management
+		String errorFilename = outputDir + "/" + dateFormat.format(date) + "_" + shortMarketName + "_" + cP.toString().replaceAll("/", "_") + ".error";
+		FileWriter fileWriterError = null;
+		
 		// Trades variables
 		Trades trades = marketDataService.getTrades(cP);
 		Trades oldTrades = trades;
@@ -70,12 +89,13 @@ public final class Recorder {
 		OrderBook oldOrderBook = marketDataService.getOrderBook(cP);
 		OrderBook orderBook =  oldOrderBook;
 		OrderBook orderBookUpdate = oldOrderBook;
-		Date date = new Date();
-
+		
 		// Ouput file management
-		DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd");
-		System.out.println();
-		FileWriter fileWriter = new FileWriter(outputDir + "/" + dateFormat.format(date) + "_" + marketName + "_" + cP.toString().replaceAll("/", "_") + ".obat");
+		String dataOutputDir = outputDir + "/" + cP.toString().replaceAll("/", "_") + "/" + shortMarketName; 
+		if(!new File(dataOutputDir).exists()) {
+			new File(dataOutputDir).mkdirs();
+		}
+		FileWriter fileWriter = new FileWriter(dataOutputDir + "/" + dateFormat.format(date)  + ".obat");
 		BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
 
 		while (true) {
@@ -102,11 +122,16 @@ public final class Recorder {
 				orderBook = marketDataService.getOrderBook(cP);
 				orderBookUpdate = xchangeTools.computeObUpdates(orderBook, oldOrderBook);
 				oldOrderBook = orderBook;
-
-			} catch (InterruptedException e) {
+				
+			} catch (Exception e) {
+				if (fileWriterError == null) {
+					fileWriterError = new FileWriter(errorFilename);
+				}
+				fileWriter.write("Error Timestamp=" + new Date().getTime() + "\n" + e.toString() + "\n");
 				e.printStackTrace();
-				bufferedWriter.close();
+				//fileWriterError.close();
+				//bufferedWriter.close();
 			}
-		} 
+		}
 	}
 }

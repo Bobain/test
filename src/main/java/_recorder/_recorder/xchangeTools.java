@@ -79,7 +79,7 @@ public final class xchangeTools {
 			} else {
 				oo = old0rderbookOneSide.get(ooInd);
 			}
-			c = o.getLimitPrice().compareTo(oo.getLimitPrice());
+			c = correctForSide * o.getLimitPrice().compareTo(oo.getLimitPrice());
 			if (c>0) {
 				oneSideUpdates.add(new LimitOrder(oo.getType(), new BigDecimal(0.0), oo.getCurrencyPair(), oo.getId(), oo.getTimestamp(), oo.getLimitPrice()));
 				ooInd++;
