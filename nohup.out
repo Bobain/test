@@ -1,0 +1,20 @@
+Exception in thread "main" java.lang.NumberFormatException: For input string: "/home/tonigor/btcdata"
+	at java.lang.NumberFormatException.forInputString(NumberFormatException.java:65)
+	at java.lang.Integer.parseInt(Integer.java:481)
+	at java.lang.Integer.parseInt(Integer.java:527)
+	at _recorder._recorder.Recorder.main(Recorder.java:49)
+Exception in thread "main" java.lang.NumberFormatException: For input string: "/home/tonigor/btcdata"
+	at java.lang.NumberFormatException.forInputString(NumberFormatException.java:65)
+	at java.lang.Integer.parseInt(Integer.java:481)
+	at java.lang.Integer.parseInt(Integer.java:527)
+	at _recorder._recorder.Recorder.main(Recorder.java:49)
+Exception in thread "main" java.lang.NumberFormatException: For input string: "/home/tonigor/btcdata"
+	at java.lang.NumberFormatException.forInputString(NumberFormatException.java:65)
+	at java.lang.Integer.parseInt(Integer.java:481)
+	at java.lang.Integer.parseInt(Integer.java:527)
+	at _recorder._recorder.Recorder.main(Recorder.java:49)
+Exception in thread "main" java.lang.NumberFormatException: For input string: "/home/tonigor/btcdata"
+	at java.lang.NumberFormatException.forInputString(NumberFormatException.java:65)
+	at java.lang.Integer.parseInt(Integer.java:481)
+	at java.lang.Integer.parseInt(Integer.java:527)
+	at _recorder._recorder.Recorder.main(Recorder.java:49)
