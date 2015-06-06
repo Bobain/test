@@ -5,6 +5,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -12,6 +13,7 @@ import java.util.List;
 
 import com.xeiam.xchange.Exchange;
 import com.xeiam.xchange.ExchangeFactory;
+import com.xeiam.xchange.anx.v2.ANXExchange;
 import com.xeiam.xchange.bitbay.BitbayExchange;
 import com.xeiam.xchange.bitcurex.BitcurexExchange;
 import com.xeiam.xchange.bitfinex.v1.BitfinexExchange;
@@ -56,7 +58,9 @@ public final class Recorder extends Thread {
 
 	public RecorderConfig settings;
 	public String outputDir;
-	private OrderBook orderBook;
+	public OrderBook orderBook;
+	public BigDecimal bestBid;
+	public BigDecimal bestAsk;
 	private Trades trades;
 	private Trades oldTrades;
 	private double latency;
@@ -67,9 +71,11 @@ public final class Recorder extends Thread {
 	public FileWriter fileWriterError = null;
 	public long lastNbTrades = -1;
 	private double requestWaitSeconds;
+	private final static double WAIT_MULTIPLIER = 10000.0;
 
 	public void plotOb() {
 		xchangeTools.plotOB(this.orderBook, this.shortMarketName + " " + this.settings.currencyPairToRecord.toString());
+		xchangeTools.ob2jtable(this.orderBook, this.shortMarketName + " " + this.settings.currencyPairToRecord.toString());
 	}
 	
 	public Trades getTrade(PollingMarketDataService marketDataService, CurrencyPair cP) 
@@ -103,7 +109,7 @@ public final class Recorder extends Thread {
 		}
 		e.printStackTrace();
 		// Waiting enough for not being banned : An error will most probably occur when requesting data
-		Thread.sleep((long) (2200*requestWaitSeconds));
+		Thread.sleep((long) (WAIT_MULTIPLIER*requestWaitSeconds));
 		
 	}
 	
@@ -179,7 +185,7 @@ public final class Recorder extends Thread {
 					printErrorAndWait(e);
 				} catch (InterruptedException e1) {
 					// TODO Auto-generated catch block
-					e1.printStackTrace();
+					break;
 				}
 			}
 		}
@@ -210,7 +216,7 @@ public final class Recorder extends Thread {
 				
 				// Waiting enough for not being banned
 				try {
-					Thread.sleep((long) (2200*requestWaitSeconds));
+					Thread.sleep((long) (WAIT_MULTIPLIER*requestWaitSeconds));
 				} catch (InterruptedException e1) {
 					break;
 				}
@@ -230,6 +236,9 @@ public final class Recorder extends Thread {
 					orderBookUpdate = xchangeTools.computeObUpdates(orderBook, oldOrderBook);
 					oldOrderBook = orderBook;
 				}
+				
+				this.bestAsk = orderBook.getAsks().get(0).getLimitPrice();
+				this.bestBid = orderBook.getBids().get(0).getLimitPrice();
 				
 				this.latency = (new Date().getTime()-tBeforeUpd)/1000.0;
 				
@@ -295,7 +304,7 @@ public final class Recorder extends Thread {
 		// new RecorderConfig(ANXExchange.class.getName(),            CurrencyPair.BTC_CAD, 1.0, new Boolean[] {true, false}),
 		// new RecorderConfig(ANXExchange.class.getName(),            CurrencyPair.BTC_CNY, 1.0, new Boolean[] {true, false}),
 		// new RecorderConfig(ANXExchange.class.getName(),            CurrencyPair.BTC_CHF, 1.0, new Boolean[] {true, false}),
-		// new RecorderConfig(ANXExchange.class.getName(),            CurrencyPair.BTC_EUR, 1.0, new Boolean[] {true, false}),
+		new RecorderConfig(ANXExchange.class.getName(),            CurrencyPair.BTC_EUR, 1.0, new Boolean[] {false, true}),
 		// new RecorderConfig(ANXExchange.class.getName(),            CurrencyPair.BTC_GBP, 1.0, new Boolean[] {true, false}),
 		// new RecorderConfig(ANXExchange.class.getName(),            CurrencyPair.BTC_HKD, 1.0, new Boolean[] {true, false}),
 		// new RecorderConfig(ANXExchange.class.getName(),            CurrencyPair.BTC_JPY, 1.0, new Boolean[] {true, false}),
@@ -311,7 +320,7 @@ public final class Recorder extends Thread {
 		
 		// new RecorderConfig(BitstampExchange.class.getName(),       CurrencyPair.BTC_USD, 1.0, new Boolean[] {true, true}),
 
-		new RecorderConfig(KrakenExchange.class.getName(),         CurrencyPair.BTC_EUR, 2.0, new Boolean[] {false, true}),
+		new RecorderConfig(KrakenExchange.class.getName(),         CurrencyPair.BTC_EUR, 1.0, new Boolean[] {false, true}),
 	//	new RecorderConfig(KrakenExchange.class.getName(),         CurrencyPair.BTC_USD, 4.0, new Boolean[] {true, true}),
 
 		// new RecorderConfig(ItBitExchange.class.getName(),          CurrencyPair.BTC_USD, 1.0, new Boolean[] {false, true}),
@@ -328,7 +337,7 @@ public final class Recorder extends Thread {
 */		
 		
 		// new RecorderConfig(HitbtcExchange.class.getName(),         CurrencyPair.BTC_USD, 1.0, new Boolean[] {true, true}),
-		new RecorderConfig(HitbtcExchange.class.getName(),         CurrencyPair.BTC_EUR, 1.0, new Boolean[] {false, true}),
+	//	new RecorderConfig(HitbtcExchange.class.getName(),         CurrencyPair.BTC_EUR, 1.0, new Boolean[] {false, true}),
 		
 		
 		/*new RecorderConfig(MercadoBitcoinExchange.class.getName(), CurrencyPair.BTC_BRL, 1.0, new Boolean[] {true, true}),

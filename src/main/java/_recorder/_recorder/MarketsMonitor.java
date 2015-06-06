@@ -11,6 +11,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.AbstractCellEditor;
@@ -18,12 +21,16 @@ import javax.swing.DefaultCellEditor;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
+
+import com.xeiam.xchange.dto.marketdata.OrderBook;
+import com.xeiam.xchange.dto.trade.LimitOrder;
 
 import _recorder._recorder.Recorder.RecorderConfig;
 
@@ -39,14 +46,14 @@ public final class MarketsMonitor {
 		private List<Recorder> threads;
 		String[] titles = {"Market Name", "Currency Pair", "data feed working", 
 				"has error", "Thread alive", "Draw orderbook", "update duration (sec)", 
-				"lastNbTrades", "Latency (sec)"};
+				"Latency (sec)", "Best Bid", "Best Ask"};
 		private ZModel zModel;
 
 		public MonitorMainWindow(String outputDir){
 			this.setLocationRelativeTo(null);
 			this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			this.setTitle("Orderbook threads monitor");
-			this.setSize(1200, 1000);
+			this.setSize(1200, 1200);
 			this.setLocation(0, 0);
 
 
@@ -80,39 +87,11 @@ public final class MarketsMonitor {
 		}
 		private static class ValueRenderer extends JCheckBox
 		implements TableCellRenderer {
-
-			/**
-			 * 
-			 */
-			private static final long serialVersionUID = 1L;
-
 			@Override
 			public Component getTableCellRendererComponent(
 					JTable table, Object value, boolean isSelected,
 					boolean hasFocus, int row, int col) {
-				//Value v = (Value) value;
-				/*
-				 * private static class Value implements Comparable<Value> {
 
-			private Boolean selected;
-			private Double value;
-
-			@Override
-			public int compareTo(Value v) {
-				return this.value.compareTo(v.value);
-			}
-
-			@Override
-			public boolean equals(Object v) {
-				return v instanceof Value && this.value.equals(((Value) v).value);
-			}
-
-			@Override
-			public int hashCode() {
-				return this.value.hashCode();
-			}
-		}
-				this.setSelected(v.selected);*/
 				if (isSelected) {
 					setForeground(table.getSelectionForeground());
 					setBackground(table.getSelectionBackground());
@@ -124,7 +103,7 @@ public final class MarketsMonitor {
 			}
 		}
 
-		
+
 
 		private class ValueEditor extends AbstractCellEditor 
 		implements TableCellEditor, ItemListener {
@@ -235,7 +214,7 @@ public final class MarketsMonitor {
 							reader = new BufferedReader(new FileReader(file));
 							String text = null;
 							String savetext=null;
-								            		
+
 							while ((text = reader.readLine()) != null) {
 								savetext += text;
 							}
@@ -264,8 +243,8 @@ public final class MarketsMonitor {
 			for (int i = 0; i < Recorder.watchList.length; i++) {
 				rc = Recorder.watchList[i];
 				data[i] = new Object[]{threads.get(i).shortMarketName, 
-						rc.currencyPairToRecord, "Trades:" + threads.get(i).settings.enableServices[0] + "  OB:" + threads.get(i).settings.enableServices[1],
-						"No", threads.get(i).isAlive(), "DrawOB", -1.0, -1, -1.0};
+						rc.currencyPairToRecord, "Trades: NA OB: NA",
+						"No", true, "DrawOB", -1.0, -1.0, -1.0, -1.0};
 			}
 
 			//Notre modèle d'affichage spécifique destiné à pallier
@@ -280,7 +259,7 @@ public final class MarketsMonitor {
 				private static final long serialVersionUID = 1L;
 				/**
 				 * 
-				 
+
 				private static final long serialVersionUID = 1L;
 
 				@Override
@@ -318,11 +297,19 @@ public final class MarketsMonitor {
 			// this.jtable.getColumn("Suppression").setCellEditor(new DeleteButtonEditor(new JCheckBox()));
 
 			//On ajoute le tableau
-			this.getContentPane().add(new JScrollPane(jtable), BorderLayout.CENTER);
+			// JPanel jp1 = new JPanel();
+			// jp1.add();
 
-			// JButton ajouter = new JButton("Ajouter une ligne");
-			// ajouter.addActionListener(new MoreListener());
-			// this.getContentPane().add(ajouter, BorderLayout.SOUTH);
+
+			// JButton jb = new JButton("Plot Whole OB");
+			// jb.addActionListener(ObCumPlotter(this.threads));
+
+			// JPanel jp2 = new JPanel();
+			// jp2.add(jb, BorderLayout.SOUTH);
+
+			this.add(new JScrollPane(jtable));
+			//this.add(jp2);
+
 		}     
 
 	}
@@ -340,25 +327,36 @@ public final class MarketsMonitor {
 		MonitorMainWindow mmw;
 		mmw = new MarketsMonitor.MonitorMainWindow(outputDir);
 		mmw.setVisible(true);
-		
+
 		while (true){
-			/*for (int i = 0; i < Recorder.watchList.length; i++) {
-				if (new File(mmw.threads.get(i).errorFilename).exists()){
-					mmw.data[i][3] = "Yes, click so see it";
-				} else {
-					mmw.data[i][3] = "No";
-				}
-				mmw.data[i][4] = mmw.threads.get(i).isAlive() && !mmw.threads.get(i).isInterrupted();
-			}*/
-			
 			for (int i = 0; i < mmw.threads.size(); i++) {
-				for (int j = 3; j < mmw.zModel.getColumnCount(); j++) {
+				//		mmw.threads.get(i).wait();
+				for (int j = 2; j < mmw.zModel.getColumnCount(); j++) {
 					mmw.zModel.setValueAt(null, i, j);
 				}
+				//		mmw.threads.get(i).notify();
 			}
 			mmw.zModel.fireTableDataChanged();
 			mmw.jtable.validate();
 			mmw.jtable.repaint();
+			
+			/* Boolean readyToPlotCum = true;
+			for (Recorder t: mmw.threads) {
+				if (t.orderBook == null){
+					readyToPlotCum = false;
+					break;
+				}
+			}
+			if (readyToPlotCum){
+				OrderBook ob = new OrderBook(null, new ArrayList<LimitOrder>(), new ArrayList<LimitOrder>());
+				for (Recorder t: mmw.threads) {
+					ob.getAsks().addAll(t.orderBook.getAsks());
+					ob.getBids().addAll(t.orderBook.getBids());
+				}
+				Collections.sort(ob.getAsks());
+				Collections.sort(ob.getBids());
+				xchangeTools.plotOB(ob, "Cumulated Orderbook");
+			}*/
 			
 			Thread.sleep(2000);
 		}
@@ -403,15 +401,24 @@ public final class MarketsMonitor {
 		//Définit la valeur à l'emplacement spécifié
 		public void setValueAt(Object value, int row, int col) {
 			Recorder r = threads.get(row);
-			if (0==col){ this.data[row][col] = r.shortMarketName;}
-			else if (1==col){this.data[row][col] = r.settings.currencyPairToRecord;}
-			else if (2==col) {this.data[row][col] = "Trades:" + r.settings.enableServices[0] + "  OB:" + r.settings.enableServices[1];}
-			else if (3==col) {this.data[row][col] = (r.fileWriterError != null)?"Yes, click to see it":"No";}
-			else if (4==col) {this.data[row][col] = r.isAlive();}
-			else if (5==col) {this.data[row][col] = "DrawOB";}
-			else if (6==col) {this.data[row][col] = r.getUpdDur();}
-			else if (7==col) {this.data[row][col] = r.lastNbTrades;}
-			else if (8==col) {this.data[row][col] = r.getLatency();}
+			/*		try {
+				r.wait();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			 */		if (0==col){ this.data[row][col] = r.shortMarketName;}
+			 else if (1==col){this.data[row][col] = r.settings.currencyPairToRecord;}
+			 else if (2==col) {this.data[row][col] = "Trades:" + r.settings.enableServices[0] + "  OB:" + r.settings.enableServices[1];}
+			 else if (3==col) {this.data[row][col] = (r.fileWriterError != null)?"Yes, click to see it":"No";}
+			 else if (4==col) {this.data[row][col] = r.isAlive();}
+			 else if (5==col) {this.data[row][col] = "DrawOB";}
+			 else if (6==col) {this.data[row][col] = r.getUpdDur();}
+			 else if (7==col) {this.data[row][col] = r.getLatency();}
+			 else if (8==col) {this.data[row][col] = r.orderBook==null?-1.0:r.orderBook.getBids().get(0).getLimitPrice();}
+			 else if (9==col) {this.data[row][col] = r.orderBook==null?-1.0:r.orderBook.getAsks().get(0).getLimitPrice();}
+			 this.fireTableCellUpdated(row, col);
+			 //		r.notify();
 		}
 
 		//Retourne la classe de la donnée de la colonne

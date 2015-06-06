@@ -9,6 +9,10 @@ import java.util.List;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableModel;
 
 import com.xeiam.xchange.dto.marketdata.OrderBook;
 import com.xeiam.xchange.dto.marketdata.Trade;
@@ -30,6 +34,27 @@ public final class xchangeTools {
 		System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 		System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 		System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+	}
+	public final static void ob2jtable(OrderBook ob, String name) {
+		JFrame jf = new JFrame();
+		jf.setSize(1200, 200);
+		jf.setLocation(0, 0);
+		jf.setTitle(name);
+		
+		
+		Object[][] data = new Object[20][];
+		double accAsk = 0.0;
+		double accBid = 0.0;
+		for (int i = 0; i < data.length; i++) {
+			accAsk += ob.getAsks().get(i).getTradableAmount().doubleValue();
+			accBid += ob.getBids().get(i).getTradableAmount().doubleValue();
+			data[i] = new Object[]{accBid, ob.getBids().get(i).getTradableAmount(), ob.getBids().get(i).getLimitPrice(), 
+					ob.getAsks().get(i).getLimitPrice(), ob.getAsks().get(i).getTradableAmount(), accAsk};
+		}
+		String[] titles = {"Cumulated Bid", "amount", "Bid Price", "Cumulated Ask", "amount", "Ask Price"};
+		JTable jt = new JTable(data, titles);
+		jf.getContentPane().add(new JScrollPane(jt));
+		jf.setVisible(true);
 	}
 	public final static void plotOB(OrderBook ob, String name) {
 		// Create Chart
